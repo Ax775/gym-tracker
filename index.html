@@ -599,16 +599,31 @@ function sanitize(str, maxLen = 200) {
 async function loadFromSupabase() {
   if (!window.currentUser || !window.supabase) return;
   try {
-    const { data: workouts } = await window.supabase
-      .from('workouts').select('*, sets(*)')
+    // Fetch workouts and sets separately (more reliable than nested select)
+    const { data: workouts, error: woErr } = await window.supabase
+      .from('workouts').select('*')
       .eq('user_id', window.currentUser.id)
       .order('date', { ascending: false });
+    const { data: allSets, error: setsErr } = await window.supabase
+      .from('sets').select('*')
+      .eq('user_id', window.currentUser.id);
+
+    if (woErr) console.warn('[GymOS] workouts fetch error:', woErr);
+    if (setsErr) console.warn('[GymOS] sets fetch error:', setsErr);
+    console.log('[GymOS] Supabase workouts:', workouts?.length ?? 0, 'local logs before merge:', DB.logs.length);
 
     if (workouts && workouts.length) {
+      // Group sets by workout_id
+      const setsByWorkout = {};
+      (allSets || []).forEach(s => {
+        if (!setsByWorkout[s.workout_id]) setsByWorkout[s.workout_id] = [];
+        setsByWorkout[s.workout_id].push(s);
+      });
+
       const sbLogs = workouts.map(wo => ({
         date: wo.date,
         _sbId: wo.id,
-        sets: (wo.sets || []).map(s => {
+        sets: (setsByWorkout[wo.id] || []).map(s => {
           const ex = DB.exercises.find(e => e.name.toLowerCase() === (s.exercise_name || '').toLowerCase());
           const schedItem = ex ? Object.values(DB.schedule).flat().find(si => si.exId === ex.id) : null;
           return { scheduleItemId: schedItem?.id || s.exercise_name, exId: ex?.id || s.exercise_name, reps: s.reps || 0, weight: parseFloat(s.weight_kg) || 0 };
@@ -618,11 +633,13 @@ async function loadFromSupabase() {
       const sbDates = new Set(sbLogs.map(l => l.date));
       const localOnly = DB.logs.filter(l => !sbDates.has(l.date));
       DB.logs = [...sbLogs, ...localOnly];
+      console.log('[GymOS] After merge — total logs:', DB.logs.length, DB.logs.map(l => l.date));
       saveDB();
       // Backfill any local-only logs to Supabase
       localOnly.forEach(l => syncWorkoutToSupabase(l.date));
     } else {
       // No Supabase data yet — keep existing localStorage data and sync it up
+      console.log('[GymOS] No Supabase workouts found. Local logs kept:', DB.logs.length);
       DB.logs.forEach(l => syncWorkoutToSupabase(l.date));
     }
 
