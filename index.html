@@ -1284,7 +1284,9 @@ function finishWorkout() {
   });
   saveDB();
   syncWorkoutToSupabase(today); // fire-and-forget
+  activeDay = activeDayScreen; // dashboard hero reflects the day just completed
   renderDayScreen();
+  renderDashboard();
   showToast('Workout completed! 💪');
 }
 
