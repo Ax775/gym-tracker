@@ -327,9 +327,6 @@
       <h1>Profile</h1>
     </div>
 
-    <!-- Debug panel -->
-    <div id="profile-debug" style="font-size:11px;color:var(--muted);background:var(--surface2);border-radius:6px;padding:8px 10px;margin-bottom:16px;word-break:break-all;"></div>
-
     <!-- Avatar + identity -->
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
       <div id="profile-avatar" style="width:64px;height:64px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:var(--accent);flex-shrink:0;"></div>
@@ -2213,24 +2210,9 @@ function getBestStreak() {
   return best;
 }
 
-async function debugSupabase() {
-  if (!window.supabase || !window.currentUser) return 'Not logged in';
-  const { data: wos } = await window.supabase.from('workouts').select('date').eq('user_id', window.currentUser.id).order('date', {ascending:false});
-  return wos ? wos.map(w => w.date).join(', ') || '(geen)' : '(query mislukt)';
-}
-
 function renderProfile() {
   const user = window.currentUser;
   if (!user) return;
-
-  // Debug panel
-  const dbg = document.getElementById('profile-debug');
-  if (dbg) {
-    dbg.textContent = `Lokaal: ${DB.logs.map(l=>l.date).join(', ') || '(geen)'} | Supabase: laden…`;
-    debugSupabase().then(sbDates => {
-      dbg.textContent = `Lokaal: ${DB.logs.map(l=>l.date).join(', ') || '(geen)'} | Supabase: ${sbDates}`;
-    });
-  }
 
   // Avatar + identity
   const initial = (user.email || '?')[0].toUpperCase();
