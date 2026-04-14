@@ -3,16 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, interactive-widget=resizes-content" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data: https:; font-src 'self' data:; frame-ancestors 'none';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://esm.sh https://cdn.esm.sh; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://esm.sh https://cdn.esm.sh; img-src 'self' data: https:; font-src 'self' data:; frame-ancestors 'none';">
 <title>GymOS</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-  const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  let currentUser = null;
-</script>
 <style>
   :root {
     --bg: #0D0D0D;
@@ -231,7 +224,7 @@
 </style>
 </head>
 <body>
-<div id="auth-screen" style="display:none; position:fixed; inset:0; background:#0f0f0f; z-index:1000; flex-direction:column; align-items:center; justify-content:center; padding:24px;">
+<div id="auth-screen" style="display:flex; position:fixed; inset:0; background:#0f0f0f; z-index:1000; flex-direction:column; align-items:center; justify-content:center; padding:24px;">
   <div style="width:100%; max-width:360px;">
     <h1 style="color:#fff; font-size:28px; font-weight:700; margin-bottom:4px;">GymOS</h1>
     <p style="color:#888; margin-bottom:32px;">Track your lifts. Own your progress.</p>
@@ -326,6 +319,51 @@
     </div>
   </div>
 
+  <!-- ── Screen: Profile ── -->
+  <div id="screen-profile" class="screen">
+    <div style="padding-top:8px;margin-bottom:24px;">
+      <div class="label">Account</div>
+      <h1>Profile</h1>
+    </div>
+
+    <!-- Avatar + identity -->
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
+      <div id="profile-avatar" style="width:64px;height:64px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:var(--accent);flex-shrink:0;"></div>
+      <div>
+        <div id="profile-email" style="font-size:15px;font-weight:700;"></div>
+        <div id="profile-since" style="font-size:12px;color:var(--muted);margin-top:3px;"></div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="label mb-16">Your Numbers</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;" id="profile-stats"></div>
+
+    <!-- Achievements -->
+    <div class="label mb-16">Achievements</div>
+    <div id="profile-achievements" style="margin-bottom:24px;"></div>
+
+    <!-- Account actions -->
+    <div class="label mb-16">Account</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px;">
+      <button onclick="exportUserData()" style="width:100%;padding:14px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export my data
+      </button>
+      <button onclick="signOut()" style="width:100%;padding:14px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign out
+      </button>
+    </div>
+
+    <!-- Danger zone -->
+    <div class="label mb-16" style="color:var(--danger);">Danger Zone</div>
+    <button onclick="deleteAccount()" style="width:100%;padding:14px;background:rgba(255,68,68,0.08);border:1.5px solid rgba(255,68,68,0.3);border-radius:var(--radius-sm);color:var(--danger);font-size:14px;font-weight:700;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      Delete account &amp; all data
+    </button>
+  </div>
+
   <!-- ── Screen: Progress ── -->
   <div id="screen-progress" class="screen">
     <div style="padding-top:8px;margin-bottom:20px;">
@@ -365,6 +403,10 @@
   <button class="nav-btn" id="nav-progress" onclick="showScreen('progress')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
     Progress
+  </button>
+  <button class="nav-btn" id="nav-profile" onclick="showScreen('profile')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Profile
   </button>
 </nav>
 
@@ -537,6 +579,67 @@ function sanitize(str, maxLen = 200) {
 }
 
 // ═══════════════════════════════════════════════
+// SUPABASE SYNC
+// ═══════════════════════════════════════════════
+async function loadFromSupabase() {
+  if (!window.currentUser || !window.supabase) return;
+  try {
+    const { data: workouts } = await window.supabase
+      .from('workouts').select('*, sets(*)')
+      .eq('user_id', window.currentUser.id)
+      .order('date', { ascending: false });
+
+    if (workouts && workouts.length) {
+      DB.logs = workouts.map(wo => ({
+        date: wo.date,
+        _sbId: wo.id,
+        sets: (wo.sets || []).map(s => {
+          const ex = DB.exercises.find(e => e.name.toLowerCase() === (s.exercise_name || '').toLowerCase());
+          const schedItem = ex ? Object.values(DB.schedule).flat().find(si => si.exId === ex.id) : null;
+          return { scheduleItemId: schedItem?.id || s.exercise_name, exId: ex?.id || s.exercise_name, reps: s.reps || 0, weight: parseFloat(s.weight_kg) || 0 };
+        })
+      }));
+      saveDB();
+    }
+
+    const { data: goals } = await window.supabase
+      .from('goals').select('*').eq('user_id', window.currentUser.id);
+
+    if (goals && goals.length) {
+      DB.goals = goals.map(g => {
+        const ex = DB.exercises.find(e => e.name.toLowerCase() === (g.exercise_name || '').toLowerCase());
+        return { id: g.id, exId: ex?.id || g.exercise_name, type: g.target_weight_kg ? 'weight' : 'reps', target: g.target_weight_kg || g.target_reps || 0, deadline: null };
+      });
+      saveDB();
+    }
+  } catch(e) { console.warn('Supabase load failed, using local cache:', e); }
+}
+
+async function syncWorkoutToSupabase(dateStr) {
+  if (!window.currentUser || !window.supabase) return;
+  try {
+    const log = DB.logs.find(l => l.date === dateStr);
+    if (!log || !log.sets.length) return;
+    let woId = log._sbId;
+    if (!woId) {
+      let { data: wo } = await window.supabase.from('workouts').select('id').eq('user_id', window.currentUser.id).eq('date', dateStr).single();
+      if (!wo) {
+        const { data } = await window.supabase.from('workouts').insert({ user_id: window.currentUser.id, date: dateStr }).select().single();
+        wo = data;
+      }
+      if (!wo) return;
+      woId = wo.id; log._sbId = woId; saveDB();
+    }
+    await window.supabase.from('sets').delete().eq('workout_id', woId);
+    const inserts = log.sets.map((s, i) => {
+      const ex = getEx(s.exId);
+      return { user_id: window.currentUser.id, workout_id: woId, exercise_name: ex?.name || String(s.exId), muscle_group: ex?.group || null, set_number: i + 1, reps: s.reps || null, weight_kg: s.weight || null };
+    });
+    if (inserts.length) await window.supabase.from('sets').insert(inserts);
+  } catch(e) { console.warn('Workout sync failed:', e); }
+}
+
+// ═══════════════════════════════════════════════
 // AUTH
 // ═══════════════════════════════════════════════
 let _authTab = 'login';
@@ -554,26 +657,38 @@ function switchAuthTab(tab) {
 
 async function handleEmailAuth(mode) {
   mode = mode || _authTab;
-  const email = document.getElementById('auth-email').value.trim();
-  const password = document.getElementById('auth-password').value;
-  document.getElementById('auth-error').style.display = 'none';
-  if (!email || !password) { showAuthError('Please enter email and password.'); return; }
+  try {
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value;
+    document.getElementById('auth-error').style.display = 'none';
+    if (!email || !password) { showAuthError('Vul email en wachtwoord in.'); return; }
 
-  const btn = document.getElementById('auth-submit-btn');
-  btn.textContent = '...'; btn.disabled = true;
+    const btn = document.getElementById('auth-submit-btn');
+    btn.textContent = '...'; btn.disabled = true;
 
-  const { error } = mode === 'login'
-    ? await supabase.auth.signInWithPassword({ email, password })
-    : await supabase.auth.signUp({ email, password });
+    const { error } = mode === 'login'
+      ? await supabase.auth.signInWithPassword({ email, password })
+      : await supabase.auth.signUp({ email, password });
 
-  btn.disabled = false;
-  btn.textContent = mode === 'login' ? 'Log in' : 'Create account';
-  if (error) { showAuthError(error.message); return; }
-  if (mode === 'signup') showAuthError('Check your email to confirm your account.', true);
+    btn.disabled = false;
+    btn.textContent = mode === 'login' ? 'Log in' : 'Create account';
+    if (error) { showAuthError(error.message); return; }
+    if (mode === 'signup') showAuthError('Check je email om je account te bevestigen.', true);
+  } catch(e) {
+    showAuthError('Fout: ' + e.message);
+  }
 }
 
 async function handleGoogleAuth() {
-  await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+  try {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + window.location.pathname }
+    });
+    if (error) showAuthError(error.message);
+  } catch(e) {
+    showAuthError('Google fout: ' + e.message);
+  }
 }
 
 function showAuthError(msg, isInfo) {
@@ -586,8 +701,6 @@ function showAuthError(msg, isInfo) {
 
 function showAuthScreen() {
   document.getElementById('auth-screen').style.display = 'flex';
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('settings-btn').style.display = 'none';
   const local = localStorage.getItem('gymdb');
   if (local) {
     try {
@@ -599,8 +712,6 @@ function showAuthScreen() {
 
 function hideAuthScreen() {
   document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-  document.getElementById('settings-btn').style.display = 'flex';
 }
 
 async function migrateLocalData() {
@@ -833,6 +944,7 @@ function showScreen(name) {
   if (name === 'day') renderDayScreen();
   if (name === 'library') renderLibrary();
   if (name === 'progress') renderProgress();
+  if (name === 'profile') renderProfile();
 }
 
 function goToDay(day) {
@@ -1152,6 +1264,7 @@ function finishWorkout() {
     }
   });
   saveDB();
+  syncWorkoutToSupabase(today); // fire-and-forget
   renderDayScreen();
   showToast('Workout completed! 💪');
 }
@@ -1242,6 +1355,7 @@ function saveSetLog() {
     log.sets.push({scheduleItemId: setLogData.scheduleItemId, exId: setLogData.exId, reps: s.reps, weight: s.weight});
   });
   saveDB();
+  syncWorkoutToSupabase(today); // fire-and-forget
   closeModal('modal-setlog');
   renderDayScreen();
   renderDashboard();
@@ -1737,13 +1851,32 @@ function saveNewGoal() {
   if (!exId || !target) return;
   DB.goals.push({ id: uid(), exId, type: goalType, target, deadline: deadline || null, createdAt: new Date().toISOString().slice(0,10) });
   saveDB();
+  // sync to Supabase
+  if (window.currentUser && window.supabase) {
+    const ex = getEx(exId);
+    window.supabase.from('goals').upsert({
+      user_id: window.currentUser.id,
+      exercise_name: ex?.name || exId,
+      target_weight_kg: goalType === 'weight' ? target : null,
+      target_reps: goalType === 'reps' ? target : null
+    }, { onConflict: 'user_id,exercise_name' }).then(({ error }) => { if (error) console.warn('Goal sync failed:', error); });
+  }
   closeModal('modal-addgoal');
   renderGoals();
 }
 
 function deleteGoal(id) {
+  const goal = DB.goals.find(g => g.id === id);
   DB.goals = DB.goals.filter(g => g.id !== id);
   saveDB();
+  // sync deletion to Supabase
+  if (window.currentUser && window.supabase && goal) {
+    const ex = getEx(goal.exId);
+    window.supabase.from('goals').delete()
+      .eq('user_id', window.currentUser.id)
+      .eq('exercise_name', ex?.name || goal.exId)
+      .then(({ error }) => { if (error) console.warn('Goal delete sync failed:', error); });
+  }
   renderGoals();
 }
 
@@ -2005,6 +2138,85 @@ function addDbExercise(name, group, btn) {
 }
 
 // ═══════════════════════════════════════════════
+// PROFILE
+// ═══════════════════════════════════════════════
+function getBestStreak() {
+  const dates = [...new Set(DB.logs.map(l => l.date))].sort();
+  if (!dates.length) return 0;
+  let best = 1, current = 1;
+  for (let i = 1; i < dates.length; i++) {
+    const diff = (new Date(dates[i]) - new Date(dates[i-1])) / 86400000;
+    current = diff === 1 ? current + 1 : 1;
+    if (current > best) best = current;
+  }
+  return best;
+}
+
+function renderProfile() {
+  const user = window.currentUser;
+  if (!user) return;
+
+  // Avatar + identity
+  const initial = (user.email || '?')[0].toUpperCase();
+  document.getElementById('profile-avatar').textContent = initial;
+  document.getElementById('profile-email').textContent = user.email;
+  const since = user.created_at
+    ? new Date(user.created_at).toLocaleDateString('nl-NL', { year:'numeric', month:'long', day:'numeric' })
+    : '';
+  document.getElementById('profile-since').textContent = since ? `Lid sinds ${since}` : '';
+
+  // Stats
+  const totalSessions = DB.logs.length;
+  const allSets = DB.logs.flatMap(l => l.sets);
+  const totalSets = allSets.length;
+  const totalKg = Math.round(allSets.reduce((s, x) => s + (x.weight || 0) * (x.reps || 0), 0));
+  const streak = getStreakDays();
+  const bestStreak = getBestStreak();
+  const trackedExIds = [...new Set(allSets.map(s => s.exId))];
+  const prCount = trackedExIds.filter(id => getPR(id) > 0).length;
+
+  document.getElementById('profile-stats').innerHTML = [
+    ['🏋️', totalSessions, 'Workouts'],
+    ['📦', totalSets, 'Sets gelogd'],
+    ['🔥', streak, 'Huidige streak'],
+    ['⭐', bestStreak, 'Beste streak'],
+    ['🏆', prCount, "PR's"],
+    ['⚖️', totalKg > 1000 ? (totalKg/1000).toFixed(1)+'t' : totalKg+'kg', 'Totaal gewicht'],
+  ].map(([icon, val, lab]) => `
+    <div class="stat-card">
+      <div style="font-size:22px;margin-bottom:4px;">${icon}</div>
+      <div class="stat-val">${val}</div>
+      <div class="stat-lab">${lab}</div>
+    </div>`).join('');
+
+  // Achievements
+  const badges = [];
+  if (totalSessions >= 1)   badges.push(['🥇', 'Eerste workout', 'De reis begint']);
+  if (totalSessions >= 10)  badges.push(['💪', '10 workouts', 'Serieus bezig']);
+  if (totalSessions >= 50)  badges.push(['🔥', '50 workouts', 'Dedicated atleet']);
+  if (totalSessions >= 100) badges.push(['👑', '100 workouts', 'Legendarisch']);
+  if (streak >= 7)          badges.push(['📅', 'Week streak', '7 dagen op rij']);
+  if (streak >= 30)         badges.push(['🌟', 'Maand streak', '30 dagen op rij']);
+  if (prCount >= 5)         badges.push(['🎯', '5 PR\'s', 'Personal records']);
+  if (totalKg >= 10000)     badges.push(['🚀', '10.000 kg', 'Totaal opgetild']);
+
+  document.getElementById('profile-achievements').innerHTML = badges.length
+    ? badges.map(([icon, title, sub]) => `
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface2);border-radius:var(--radius-sm);margin-bottom:8px;">
+          <div style="font-size:28px;width:44px;text-align:center;">${icon}</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;">${title}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px;">${sub}</div>
+          </div>
+        </div>`).join('')
+    : `<div class="empty-state"><p>Log je eerste workout om achievements te verdienen.</p></div>`;
+}
+
+function signOut() {
+  if (window.supabase) window.supabase.auth.signOut();
+}
+
+// ═══════════════════════════════════════════════
 // TOAST
 // ═══════════════════════════════════════════════
 function showToast(msg) {
@@ -2024,37 +2236,12 @@ function showToast(msg) {
 // ═══════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════
-function init() {
+async function init() {
   activeDayScreen = activeDay;
+  await loadFromSupabase();
   renderDashboard();
 }
 
-// ── Auth state listener — drives app init ──
-supabase.auth.onAuthStateChange((event, session) => {
-  currentUser = session?.user ?? null;
-  if (currentUser) {
-    hideAuthScreen();
-    if (!document.getElementById('logout-btn')) {
-      const b = document.createElement('button');
-      b.id = 'logout-btn';
-      b.textContent = 'Sign out';
-      b.style.cssText = 'position:fixed;top:12px;right:12px;z-index:999;background:none;border:1px solid #333;color:#666;padding:6px 12px;border-radius:6px;font-size:13px;cursor:pointer;';
-      b.onclick = () => supabase.auth.signOut();
-      document.body.appendChild(b);
-    }
-    document.getElementById('logout-btn').style.display = 'block';
-    init();
-  } else {
-    const btn = document.getElementById('logout-btn');
-    if (btn) btn.style.display = 'none';
-    showAuthScreen();
-  }
-});
-
-// Show auth screen immediately if no session (avoids flash of app content)
-supabase.auth.getSession().then(({ data: { session } }) => {
-  if (!session) showAuthScreen();
-});
 
 // ═══════════════════════════════════════════════
 // SETTINGS — DATA EXPORT & ACCOUNT DELETION
@@ -2095,6 +2282,43 @@ async function deleteAccount() {
   await supabase.auth.signOut();
   alert('Your data has been deleted. Your account email has been removed from our system.');
 }
+</script>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const SUPABASE_URL = 'https://tkkxnfmfdhxxtxjgrmcm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRra3huZm1mZGh4eHR4amdybWNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxNjMwMjcsImV4cCI6MjA5MTczOTAyN30.dqU5h9qQuMZ_-pjYhD0AF46pPKkFsLV3Q59m9XJKZ5U';
+
+window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+window.currentUser = null;
+
+let _appInit = false;
+window.supabase.auth.onAuthStateChange((event, session) => {
+  window.currentUser = session?.user ?? null;
+  if (window.currentUser) {
+    hideAuthScreen();
+    if (!document.getElementById('logout-btn')) {
+      const b = document.createElement('button');
+      b.id = 'logout-btn';
+      b.textContent = 'Sign out';
+      b.style.cssText = 'position:fixed;top:12px;right:12px;z-index:999;background:none;border:1px solid #333;color:#666;padding:6px 12px;border-radius:6px;font-size:13px;cursor:pointer;';
+      b.onclick = () => window.supabase.auth.signOut();
+      document.body.appendChild(b);
+    }
+    document.getElementById('logout-btn').style.display = 'block';
+    if (!_appInit) { _appInit = true; init(); }
+  } else {
+    _appInit = false;
+    const btn = document.getElementById('logout-btn');
+    if (btn) btn.style.display = 'none';
+    showAuthScreen();
+  }
+});
+
+window.supabase.auth.getSession().then(({ data: { session } }) => {
+  if (!session) showAuthScreen();
+});
 </script>
 
 <button id="settings-btn" onclick="toggleSettings()" style="position:fixed;bottom:20px;right:20px;z-index:900;width:44px;height:44px;border-radius:50%;background:#1a1a1a;border:1px solid #333;color:#888;font-size:20px;cursor:pointer;display:none;align-items:center;justify-content:center;">⚙️</button>
