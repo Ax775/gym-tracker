@@ -168,12 +168,13 @@
   .search-wrap { position: relative; margin-bottom: 12px; }
   .search-input { width: 100%; background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 14px; padding: 10px 12px 10px 36px; outline: none; }
   .search-input:focus { border-color: var(--accent); }
+  #auth-email:focus, #auth-password:focus { border-color: var(--accent) !important; box-shadow: 0 0 0 3px var(--accent-dim); outline: none; }
   .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); }
 
   /* ── Stepper ── */
   .set-card { background: var(--surface2); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px; }
   .set-card-done { opacity: 0.55; }
-  .stepper-btn { width: 38px; height: 38px; border-radius: 8px; background: var(--surface3); border: none; color: var(--text); font-size: 22px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.1s, transform 0.1s; }
+  .stepper-btn { width: 48px; height: 48px; border-radius: 8px; background: var(--surface3); border: none; color: var(--text); font-size: 22px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.1s, transform 0.1s; }
   .stepper-btn:active { transform: scale(0.9); background: var(--surface); }
   .stepper-val { flex: 1; text-align: center; font-size: 22px; font-weight: 800; }
 
@@ -487,7 +488,7 @@
       <textarea class="notes-input" id="editex-notes" placeholder="Optional notes…"></textarea>
     </div>
     <div style="display:flex;gap:8px;">
-      <button class="btn btn-danger" onclick="removeExFromDay()">Remove</button>
+      <button class="btn btn-danger" id="remove-ex-btn" onclick="confirmRemoveEx(this)">Remove</button>
       <div style="flex:1"></div>
       <button class="btn btn-ghost" onclick="closeModal('modal-editex')">Cancel</button>
       <button class="btn btn-primary" onclick="saveEditEx()">Save</button>
@@ -555,6 +556,20 @@
 </div>
 
 <!-- ── Modal: Progress Detail ── -->
+<div class="modal-overlay" id="modal-delete-account">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="color:var(--danger);">Delete account</div>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:16px;line-height:1.5;">This will permanently delete your account and <strong style="color:var(--text);">all workout data</strong>. This cannot be undone.</p>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:8px;">Type <strong style="color:var(--text);">DELETE</strong> to confirm:</p>
+    <input id="delete-confirm-input" type="text" placeholder="DELETE" style="width:100%;padding:12px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:16px;outline:none;margin-bottom:16px;box-sizing:border-box;" oninput="document.getElementById('delete-confirm-btn').disabled=this.value!=='DELETE';" />
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost" style="flex:1;" onclick="closeModal('modal-delete-account')">Cancel</button>
+      <button class="btn btn-danger" id="delete-confirm-btn" style="flex:1;" disabled onclick="confirmDeleteAccount()">Delete forever</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-progress-detail">
   <div class="modal" style="max-height:88vh;">
     <div class="modal-handle"></div>
@@ -653,6 +668,10 @@ function switchAuthTab(tab) {
   const btn = document.getElementById('auth-submit-btn');
   btn.textContent = tab === 'login' ? 'Log in' : 'Create account';
   btn.onclick = () => handleEmailAuth(tab);
+  document.getElementById('auth-email').value = '';
+  document.getElementById('auth-password').value = '';
+  document.getElementById('auth-error').style.display = 'none';
+  setTimeout(() => document.getElementById('auth-email').focus(), 50);
 }
 
 async function handleEmailAuth(mode) {
@@ -661,7 +680,7 @@ async function handleEmailAuth(mode) {
     const email = document.getElementById('auth-email').value.trim();
     const password = document.getElementById('auth-password').value;
     document.getElementById('auth-error').style.display = 'none';
-    if (!email || !password) { showAuthError('Vul email en wachtwoord in.'); return; }
+    if (!email || !password) { showAuthError('Please enter your email and password.'); return; }
 
     const btn = document.getElementById('auth-submit-btn');
     btn.textContent = '...'; btn.disabled = true;
@@ -673,9 +692,9 @@ async function handleEmailAuth(mode) {
     btn.disabled = false;
     btn.textContent = mode === 'login' ? 'Log in' : 'Create account';
     if (error) { showAuthError(error.message); return; }
-    if (mode === 'signup') showAuthError('Check je email om je account te bevestigen.', true);
+    if (mode === 'signup') showAuthError('Check your email to confirm your account.', true);
   } catch(e) {
-    showAuthError('Fout: ' + e.message);
+    showAuthError('Error: ' + e.message);
   }
 }
 
@@ -687,7 +706,7 @@ async function handleGoogleAuth() {
     });
     if (error) showAuthError(error.message);
   } catch(e) {
-    showAuthError('Google fout: ' + e.message);
+    showAuthError('Google error: ' + e.message);
   }
 }
 
@@ -1077,7 +1096,7 @@ function renderDashboard() {
 
   const exList = document.getElementById('dash-exercises');
   if (!items.length) {
-    exList.innerHTML = `<div class="empty-state"><p>No exercises for this day.<br/>Tap <strong>+ Add</strong> on the workout screen.</p></div>`;
+    exList.innerHTML = `<div class="empty-state"><p>No exercises yet for this day.</p><button class="btn btn-ghost" style="margin-top:10px;font-size:13px;" onclick="showScreen('workout')">Go to Workout → Add</button></div>`;
   } else {
     const preview = items.slice(0,3);
     exList.innerHTML = preview.map(item => {
@@ -1357,6 +1376,7 @@ function saveSetLog() {
   saveDB();
   syncWorkoutToSupabase(today); // fire-and-forget
   closeModal('modal-setlog');
+  showToast('Sets saved ✓');
   renderDayScreen();
   renderDashboard();
 }
@@ -1392,6 +1412,16 @@ function saveEditEx() {
   closeModal('modal-editex');
   renderDayScreen();
   renderDashboard();
+}
+
+function confirmRemoveEx(btn) {
+  if (btn.dataset.confirming) {
+    removeExFromDay();
+  } else {
+    btn.dataset.confirming = '1';
+    btn.textContent = 'Tap again to confirm';
+    setTimeout(() => { btn.dataset.confirming = ''; btn.textContent = 'Remove'; }, 3000);
+  }
 }
 
 function removeExFromDay() {
@@ -2230,7 +2260,7 @@ function showToast(msg) {
   t.textContent = msg;
   t.style.opacity = '1';
   clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.style.opacity = '0', 2000);
+  t._timer = setTimeout(() => t.style.opacity = '0', 3500);
 }
 
 // ═══════════════════════════════════════════════
@@ -2269,18 +2299,21 @@ async function exportUserData() {
   a.click();
 }
 
-async function deleteAccount() {
-  const confirmed = confirm('This will permanently delete your account and ALL workout data. This cannot be undone.\n\nType DELETE to confirm.');
-  if (!confirmed) return;
-  const input = prompt('Type DELETE to confirm:');
-  if (input !== 'DELETE') return;
+function deleteAccount() {
+  document.getElementById('delete-confirm-input').value = '';
+  document.getElementById('delete-confirm-btn').disabled = true;
+  openModal('modal-delete-account');
+}
 
+async function confirmDeleteAccount() {
   if (!currentUser) return;
+  const btn = document.getElementById('delete-confirm-btn');
+  btn.textContent = 'Deleting...'; btn.disabled = true;
   await supabase.from('goals').delete().eq('user_id', currentUser.id);
   await supabase.from('sets').delete().eq('user_id', currentUser.id);
   await supabase.from('workouts').delete().eq('user_id', currentUser.id);
   await supabase.auth.signOut();
-  alert('Your data has been deleted. Your account email has been removed from our system.');
+  closeModal('modal-delete-account');
 }
 </script>
 
@@ -2298,20 +2331,9 @@ window.supabase.auth.onAuthStateChange((event, session) => {
   window.currentUser = session?.user ?? null;
   if (window.currentUser) {
     hideAuthScreen();
-    if (!document.getElementById('logout-btn')) {
-      const b = document.createElement('button');
-      b.id = 'logout-btn';
-      b.textContent = 'Sign out';
-      b.style.cssText = 'position:fixed;top:12px;right:12px;z-index:999;background:none;border:1px solid #333;color:#666;padding:6px 12px;border-radius:6px;font-size:13px;cursor:pointer;';
-      b.onclick = () => window.supabase.auth.signOut();
-      document.body.appendChild(b);
-    }
-    document.getElementById('logout-btn').style.display = 'block';
     if (!_appInit) { _appInit = true; init(); }
   } else {
     _appInit = false;
-    const btn = document.getElementById('logout-btn');
-    if (btn) btn.style.display = 'none';
     showAuthScreen();
   }
 });
