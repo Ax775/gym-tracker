@@ -605,7 +605,7 @@ async function loadFromSupabase() {
       .order('date', { ascending: false });
 
     if (workouts && workouts.length) {
-      DB.logs = workouts.map(wo => ({
+      const sbLogs = workouts.map(wo => ({
         date: wo.date,
         _sbId: wo.id,
         sets: (wo.sets || []).map(s => {
@@ -614,7 +614,16 @@ async function loadFromSupabase() {
           return { scheduleItemId: schedItem?.id || s.exercise_name, exId: ex?.id || s.exercise_name, reps: s.reps || 0, weight: parseFloat(s.weight_kg) || 0 };
         })
       }));
+      // Merge: keep local-only logs (not yet synced to Supabase) alongside Supabase logs
+      const sbDates = new Set(sbLogs.map(l => l.date));
+      const localOnly = DB.logs.filter(l => !sbDates.has(l.date));
+      DB.logs = [...sbLogs, ...localOnly];
       saveDB();
+      // Backfill any local-only logs to Supabase
+      localOnly.forEach(l => syncWorkoutToSupabase(l.date));
+    } else {
+      // No Supabase data yet — keep existing localStorage data and sync it up
+      DB.logs.forEach(l => syncWorkoutToSupabase(l.date));
     }
 
     const { data: goals } = await window.supabase
