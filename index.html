@@ -616,7 +616,6 @@ async function loadFromSupabase() {
 
     if (woErr) console.warn('[GymOS] workouts fetch error:', woErr);
     if (setsErr) console.warn('[GymOS] sets fetch error:', setsErr);
-    console.log('[GymOS] Supabase workouts:', workouts?.length ?? 0, 'local logs before merge:', DB.logs.length);
 
     if (workouts && workouts.length) {
       // Group sets by workout_id
@@ -639,13 +638,11 @@ async function loadFromSupabase() {
       const sbDates = new Set(sbLogs.map(l => l.date));
       const localOnly = DB.logs.filter(l => !sbDates.has(l.date));
       DB.logs = [...sbLogs, ...localOnly];
-      console.log('[GymOS] After merge — total logs:', DB.logs.length, DB.logs.map(l => l.date));
       saveDB();
       // Backfill any local-only logs to Supabase
       localOnly.forEach(l => syncWorkoutToSupabase(l.date));
     } else {
       // No Supabase data yet — keep existing localStorage data and sync it up
-      console.log('[GymOS] No Supabase workouts found. Local logs kept:', DB.logs.length);
       DB.logs.forEach(l => syncWorkoutToSupabase(l.date));
     }
 
